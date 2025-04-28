@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // 136. 只出现一次的数字：给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。
 // 找出那个只出现了一次的元素。可以使用 for 循环遍历数组，结合 if 条件判断和 map 数据结构来解决，
@@ -126,6 +129,110 @@ func mySqrt(x int) int {
 	return right
 }
 
+// 26. 删除有序数组中的重复项：给你一个有序数组 nums ，请你原地删除重复出现的元素，使每个元素只出现一次，返回删除后数组的新长度。不要使用额外的数组空间，你必须在原地修改输入数组并在使用 O(1) 额外空间的条件下完成。可以使用双指针法，一个慢指针 i 用于记录不重复元素的位置，一个快指针 j 用于遍历数组，当 nums[i] 与 nums[j] 不相等时，将 nums[j] 赋值给 nums[i + 1]，并将 i 后移一位
+func removeDuplicates(nums []int) int {
+	if nums == nil || len(nums) == 0 {
+		return 0
+	}
+	i := 0
+	j := 1
+	for j < len(nums) {
+		if nums[i] != nums[j] {
+			nums[i+1] = nums[j]
+			i++
+		}
+		j++
+	}
+	return i + 1
+}
+
+// 56. 合并区间：以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。请你合并所有重叠的区间，并返回一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间。可以先对区间数组按照区间的起始位置进行排序，然后使用一个切片来存储合并后的区间，遍历排序后的区间数组，将当前区间与切片中最后一个区间进行比较，如果有重叠，则合并区间；如果没有重叠，则将当前区间添加到切片中。
+func merge(intervals [][]int) (ans [][]int) {
+	slices.SortFunc(intervals, func(p, q []int) int { return p[0] - q[0] })
+	for _, p := range intervals {
+		m := len(ans)
+		if m > 0 && p[0] <= ans[m-1][1] { // 可以合并
+			ans[m-1][1] = max(ans[m-1][1], p[1]) // 更新右端点最大值
+		} else { // 不相交，无法合并
+			ans = append(ans, p) // 新的合并区间
+		}
+	}
+	return
+}
+
+//430. 扁平化多级双向链表：多级双向链表中，除了指向下一个节点和前一个节点指针之外，它还有一个子链表指针，
+// 可能指向单独的双向链表。这些子列表也可能会有一个或多个自己的子项，依此类推，生成多级数据结构，
+// 如下面的示例所示。给定位于列表第一级的头节点，请扁平化列表，即将这样的多级双向链表展平成普通的双向链表，
+// 使所有结点出现在单级双链表中。可以定义一个结构体来表示链表节点，
+// 包含 val、prev、next 和 child 指针，然后使用递归的方法来扁平化链表，先处理当前节点的子链表，再将子链表插入到当前节点和下一个节点之间。
+
+type Node struct {
+	Val   int
+	Prev  *Node
+	Next  *Node
+	Child *Node
+}
+
+func dfs(node *Node) (last *Node) {
+	cur := node
+	for cur != nil {
+		next := cur.Next
+		// 如果有子节点，那么首先处理子节点
+		if cur.Child != nil {
+			childLast := dfs(cur.Child)
+
+			next = cur.Next
+			// 将 node 与 child 相连
+			cur.Next = cur.Child
+			cur.Child.Prev = cur
+
+			// 如果 next 不为空，就将 last 与 next 相连
+			if next != nil {
+				childLast.Next = next
+				next.Prev = childLast
+			}
+
+			// 将 child 置为空
+			cur.Child = nil
+			last = childLast
+		} else {
+			last = cur
+		}
+		cur = next
+	}
+	return
+}
+
+func flatten(root *Node) *Node {
+	dfs(root)
+	return root
+}
+
+// 我的日程类
+type MyCalendar struct {
+	books [][]int
+}
+
+func Constructor() MyCalendar {
+	return MyCalendar{books: [][]int{}}
+}
+
+// 729. 我的日程安排表 I：实现一个 MyCalendar 类来存放你的日程安排。如果要添加的日程安排不会造成 重复预订 ，
+// 则可以存储这个新的日程安排。当两个日程安排有一些时间上的交叉时（例如两个日程安排都在同一时间内），就会产生 重复预订 。
+// 日程可以用一对整数 start 和 end 表示，这里的时间是半开区间，即 [start, end) ，实数 x 的范围为 start <= x < end 。
+// 实现 MyCalendar 类：MyCalendar() 初始化日历对象。boolean book(int start, int end) 如果可以将日程安排成功添加到日历中而不会导致重复预订，
+// 返回 true ，否则，返回 false 并且不要将该日程安排添加到日历中。可以定义一个结构体来表示日程安排，包含 start 和 end 字段，
+// 然后使用一个切片来存储所有的日程安排，在 book 方法中，遍历切片中的日程安排，判断是否与要添加的日程安排有重叠。
+func (this *MyCalendar) book(startTime int, endTime int) bool {
+	for _, book := range this.books {
+		if book[0] < endTime && book[1] > startTime {
+			return false
+		}
+	}
+	this.books = append(this.books, []int{startTime, endTime})
+	return true
+}
+
 func main() {
 	// var nums = []int{2, 2, 1, 3, 3, 4, 4, 5}
 	// singleNumber(nums)
@@ -135,4 +242,9 @@ func main() {
 	// result := permute(nums2)
 	// fmt.Println(result)
 	fmt.Println(resveString([]byte{'a', 'b', 'c'}))
+
+	nums := []int{1, 1, 1, 2, 3, 4, 4, 5, 6}
+	index := removeDuplicates(nums)
+	newNums := nums[:index]
+	fmt.Println(newNums)
 }
