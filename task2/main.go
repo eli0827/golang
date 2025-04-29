@@ -41,11 +41,29 @@ func printJiOu() {
 
 }
 
-// 任务调度
-func exeTask(tasks []func()) {
+// Goroutine 题目2:设计一个任务调度器，接收一组任务（可以用函数表示），并使用协程并发执行这些任务，同时统计每个任务的执行时间。
+func exeTask() {
+	wg := sync.WaitGroup{}
+	tasks := []func(){
+		func() {
+			defer wg.Done()
+			fmt.Println("task1")
+		},
+		func() {
+			defer wg.Done()
+			fmt.Println("task2")
+		},
+		func() {
+			defer wg.Done()
+			fmt.Println("task3")
+		},
+	}
+
 	for _, task := range tasks {
+		wg.Add(1)
 		go task()
 	}
+	wg.Wait()
 }
 
 // 面向对象 题目1 ：定义一个 Shape 接口，包含 Area() 和 Perimeter() 两个方法。然后创建 Rectangle 和 Circle 结构体，实现 Shape 接口。在主函数中，创建这两个结构体的实例，并调用它们的 Area() 和 Perimeter() 方法。
